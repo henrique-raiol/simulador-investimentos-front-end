@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Investimentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 text-gray-800 min-h-screen p-4">
+
+    <div class="container mx-auto bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-4xl">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-violet-600">Simulador de Investimentos</h1>
+            <p class="text-gray-600 mt-1">Simule a rentabilidade de seus investimentos</p>
+        </header>
+
+        <nav class="mb-6 border-b border-gray-200">
+            <ul class="flex -mb-px">
+                <li class="mr-1">
+                    <button data-tab="simulacao" class="tab-button inline-block py-3 px-4 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-600 active">
+                        SIMULAÇÃO
+                    </button>
+                </li>
+                <li class="mr-1">
+                    <button data-tab="historico" class="tab-button inline-block py-3 px-4 border-b-2 border-transparent hover:border-gray-300 hover:text-gray-600">
+                        MINHAS SIMULAÇÕES (<span id="contadorHistorico">0</span>)
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <main>
+            <div id="tab-simulacao" class="tab-content active">
+                <section id="entradaDados" class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-violet-500 border-b pb-2">Informe os dados para iniciar a simulação</h2>
+                    <form id="simulacaoForm">
+                        <input type="hidden" id="simulacaoEditId">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label for="nomeInvestidor" class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                                <input type="text" id="nomeInvestidor" placeholder="Digite seu nome" value="" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2">
+                            </div>
+                            <div>
+                                <label for="primeiroAporte" class="block text-sm font-medium text-gray-700 mb-1">Valor inicial (R$)</label>
+                                <input type="number" id="primeiroAporte" value="1000" step="100" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2">
+                            </div>
+                            <div>
+                                <label for="aporteMensal" class="block text-sm font-medium text-gray-700 mb-1">Aporte mensal (R$)</label>
+                                <input type="number" id="aporteMensal" value="100" step="50" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label for="taxaJurosAnual" class="block text-sm font-medium text-gray-700 mb-1">Taxa de juros anual (%)</label>
+                                <input type="number" id="taxaJurosAnual" value="10" step="0.1" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2">
+                            </div>
+                            <div class="md:col-span-2 grid grid-cols-2 gap-3 items-end">
+                                <div class="col-span-1">
+                                    <label for="tipoPeriodo" class="block text-sm font-medium text-gray-700 mb-1">Prazo em</label>
+                                    <select id="tipoPeriodo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2 h-[42px]">
+                                        <option value="A" >Anos</option>
+                                        <option value="M" selected>Meses</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1">
+                                     <label for="periodo" class="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
+                                    <input type="number" id="periodo" value="12" step="1" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2" placeholder="Insira o valor">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label for="gastosMensais" class="block text-sm font-medium text-gray-700 mb-1">Estimativa de gasto mensal (R$)</label>
+                            <p class="text-xs text-gray-500 mb-1">Este valor será usado para calcular por quantos meses seu patrimônio acumulado poderia cobrir suas despesas.</p>
+                            <input type="number" id="gastosMensais" value="1412" step="1" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-2">
+                        </div>
+
+                        <div class="text-left mt-4 flex flex-wrap gap-3">
+                            <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition duration-150 ease-in-out flex items-center justify-start">
+                                <span id="btnSimular">Simular</span>
+                                <div id="loader" class="loader ml-2"></div>
+                            </button>
+                            <button id="btnSalvar" type="button" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out hidden">
+                                Salvar
+                            </button>
+                            <button id="btnNovaSimulacao" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out hidden">
+                                Nova Simulação
+                            </button>
+                            <button id="btnExcluirSimulacao" type="button" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-150 ease-in-out hidden">
+                                Excluir
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section id="resultados" class="hidden"> 
+                    <h2 class="text-xl font-semibold mb-6 text-violet-500 border-b pb-2">Resultado da Simulação <span id="nomeInvestidorDisplay" class="font-normal"></span></h2>
+                    <div id="resumoPrincipal" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-green-50 p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-green-700">Valor final</h3>
+                            <p id="resValorFinal" class="text-2xl font-bold text-green-600">R$ 0,00</p>
+                        </div>
+                        <div class="bg-blue-50 p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-blue-700">Total investido</h3>
+                            <p id="resTotalInvestido" class="text-2xl font-bold text-blue-600">R$ 0,00</p>
+                        </div>
+                        <div class="bg-yellow-50 p-4 rounded-lg shadow">
+                            <h3 class="text-sm font-medium text-yellow-700">Total juros ganhos</h3>
+                            <p id="resTotalJuros" class="text-2xl font-bold text-yellow-600">R$ 0,00</p>
+                        </div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-4 text-violet-500">Análises Adicionais</h3>
+                    <div id="analisesAdicionais" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-600">Do seu patrimônio final, <strong id="resPercJuros" class="text-violet-700">0%</strong> vieram de juros e <strong id="resPercAportes" class="text-violet-700">0%</strong> de aportes.</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-600">Seu patrimônio acumulado poderia cobrir seus gastos mensais por <strong id="resCoberturaCustos" class="text-violet-700">0 meses</strong>.</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-600">Ao final do período, se você parasse de fazer novos aportes e considerando a taxa de juros informada, você teria uma renda passiva mensal estimada em <strong id="resRendaPassiva" class="text-violet-700">R$ 0,00</strong>.</p>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg shadow-sm">
+                            <p class="text-sm text-gray-600">Os juros recebidos no último mês equivalem a <strong id="resEquivalenteAportes" class="text-violet-700">0</strong> o seu aporte mensal.</p>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-semibold mb-4 mt-8 text-violet-500">Evolução do Patrimônio</h3>
+                    <div class="overflow-x-auto rounded-lg shadow-md">
+                        <table id="tabelaEvolucao" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-violet-500 text-white">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Período</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Saldo inicial</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Aportes</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Juros Recebidos</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Saldo final</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-historico" class="tab-content">
+                <h2 class="text-xl font-semibold mb-4 text-violet-500">Confira as simulações que você salvou</h2>
+                <div class="mb-4 flex items-center space-x-3">
+                    <input type="text" id="buscaHistoricoInput" placeholder="Buscar por nome..." class="flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2">
+                    <button id="limparBuscaBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm py-2 px-3 rounded-lg shadow-md transition duration-150 ease-in-out">
+                        Limpar
+                    </button>
+                </div>
+                <div id="historicoVazioMsg" class="text-center text-gray-500 py-8 hidden">
+                    <p>Nenhuma simulação salva ainda.</p>
+                    <p>Faça uma simulação e clique em "Salvar Simulação" para vê-la aqui.</p>
+                </div>
+                <div class="overflow-x-auto rounded-lg shadow-md">
+                    <table id="tabelaHistorico" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-violet-500 text-white">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Nome</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">V. Inicial (R$)</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Aporte M. (R$)</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Tx. Anual (%)</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Prazo</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Gasto M. (R$)</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">V. Final (R$)</th>
+                                <th class="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center mt-12 py-4 border-t border-gray-200">
+            <p class="text-sm text-gray-500">&copy; <span id="currentYear"></span> - Simulador de Investimentos por Paulo Henrique Raiol</p>
+            <p class="text-sm text-gray-500">MVP Engenharia de Software PUC-Rio</p>
+        </footer>
+    </div>
+
+    <div id="infoModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="tituloInfoModal" class="text-lg font-semibold mb-4"></h3>
+            <p id="primaryTextInfoModal" class="mb-6"></p>
+            <p id="secondaryTextInfoModal" class="text-xs text-gray-500 mb-4"></p>
+            <div class="flex justify-center space-x-3">
+                <button id="closeInfoModalBtnPurple" class="px-4 py-2 bg-violet-600 text-white rounded-md hover:bg-violet-700"></button>
+                <button id="closeInfoModalBtnGray" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"></button>
+                <button id="closeInfoModalBtnRed" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"></button>
+                <button id="infoModalBtnExcluirSimulacao" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
