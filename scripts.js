@@ -57,6 +57,7 @@ tabButtons.forEach(button => {
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('currentYear').textContent = new Date().getFullYear();
+    await carregarTaxasBacen();
     await renderizarHistorico();
     
     form.addEventListener('submit', handleExecutarSimulacao);
@@ -80,6 +81,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     infoModalBtnExcluirSimulacao.addEventListener('click', processarExclusaoSimulacao);
 
 });
+
+const nomesTaxas = {
+    'meta_selic': 'Selic',
+    'cdi_acumulado_12_meses': 'CDI (Últimos 12m)'
+};
+
+async function carregarTaxasBacen() {
+    const selectTaxa = document.getElementById('selectTaxa');
+    const inputValor = document.getElementById('taxaJurosAnual');
+
+    try {    
+        const data = await obterTaxas();
+        
+        selectTaxa.innerHTML = '';
+
+        data.taxas.forEach((item, index) => {
+            const option = document.createElement('option');
+            option.value = item.valor; // O valor da option será o percentual (ex: 15.00)
+            option.text = nomesTaxas[item.taxa] || item.taxa; // Usa o nome amigável ou o original
+            
+            // Atributo extra para guardar a data
+            option.setAttribute('data-date', item.data); 
+            
+            selectTaxa.appendChild(option);
+
+            // Seleciona o primeiro item automaticamente
+            if (index === 0) {
+                selectTaxa.value = item.valor;
+                inputValor.value = item.valor;
+            }
+        });
+
+        // Quando mudar o select, atualiza o input de valor
+        selectTaxa.addEventListener('change', (e) => {
+            inputValor.value = e.target.value;
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar taxas:', error);
+        selectTaxa.innerHTML = '<option>Erro ao carregar</option>';
+        // Fallback: Libera o input para digitação manual se a API falhar
+        inputValor.readOnly = false;
+        inputValor.classList.remove('bg-gray-100');
+    }
+};
 
 async function handleExecutarSimulacao(event) {
     if(event) event.preventDefault(); 
@@ -475,7 +521,7 @@ async function salvarSimulacao(dados){
     formData.append('valor_final', dados.valorFinal);
 
     try{
-        const response = await fetch(HOST + 'salva_simulacao', { method: 'post', body: formData });
+        const response = await fetch(HOST + 'salva_simulacao', { method: 'put', body: formData });
         
         // Verifica se a resposta da rede foi bem-sucedida (status 200-299)
         if (!response.ok) {
@@ -573,5 +619,25 @@ async function deletarSimulacaoSalva(id){
     catch (error){
         console.error('Erro ao deletar simulação:', error);
         throw new Error('Não foi possível deletar a simulação. Por favor, tente novamente mais tarde.');
+    }
+};
+
+async function obterTaxas(){
+    /* Obtem uma lista de taxas disponíveis
+    */
+    try{
+        const response = await fetch(HOST + 'obter_taxas', { method: 'get', });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const data = await response.json();
+        return data;
+    }    
+    catch (error){
+        console.error('Erro ao obter taxas:', error);
+        throw new Error('Tivemos um problema ao obter as taxas. Por favor, tente novamente mais tarde.');
     }
 };
