@@ -1,0 +1,22 @@
+services:
+  # 1. Serviço da API Python
+  api:
+    container_name: simulador-api
+    build: 
+      context: ../simulador-investimentos-back-end
+    ports:
+      - "5000:5000" 
+    volumes:
+      - ../simulador-investimentos-back-end:/app 
+
+  # 2. Serviço do Front-end
+  web:
+    container_name: simulador-web
+    build: 
+      context: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    volumes:
+      - .:/usr/share/nginx/html
